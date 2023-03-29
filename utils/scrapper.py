@@ -1,5 +1,19 @@
+import uuid
 import requests
 from bs4 import BeautifulSoup
+from datetime import datetime, date
+
+
+def get_formatted_date(date_string):
+    # The function is used to take date and return formatted date
+    parts_count = len(date_string.split(" "))
+    if parts_count == 2:
+        current_year = datetime.now().year
+        date_object = datetime.strptime(
+            f"{date_string} {current_year}", "%b %d %Y")
+        return date_object.strftime("%Y/%m/%d")
+    else:
+        return date.today().strftime("%Y/%m/%d")
 
 
 def get_articles():
@@ -16,23 +30,24 @@ def get_articles():
 
     articles = []
     for top_story in top_stories_list:
-        heading_anchor = top_story.select_one("h2 > a")
+        headline_anchor = top_story.select_one("h2 > a")
         authors_anchor = top_story.select("div > .inline-block > a")
 
         authors = list(map(lambda x: x.getText(), authors_anchor))
         author = " and ".join(authors)
 
         date_selector = "div > .inline-block:last-child > span"
-        date = top_story.select_one(date_selector).getText()
+        date_string = top_story.select_one(date_selector).getText()
 
-        heading = heading_anchor.getText()
-        link = "https://www.theverge.com{}".format(heading_anchor["href"])
+        headline = headline_anchor.getText()
+        url = "https://www.theverge.com{}".format(headline_anchor["href"])
 
         articles.append({
-            "heading": heading,
-            "link": link,
+            "id": str(uuid.uuid4()),
+            "headline": headline,
+            "url": url,
             "author": author,
-            "date": date
+            "date": get_formatted_date(date_string)
         })
 
     return articles
